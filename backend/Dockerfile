@@ -1,22 +1,44 @@
-FROM composer:2.7 AS vendor
-
-WORKDIR /app
-COPY composer.json composer.lock ./
-RUN composer install --no-dev --no-scripts --prefer-dist
-
 FROM php:8.2-fpm
 
+# Set working directory
 WORKDIR /var/www
-RUN apt-get update && apt-get install -y libpng-dev libonig-dev libxml2-dev zip unzip git curl && \
-    docker-php-ext-install pdo pdo_mysql mbstring exif pcntl bcmath gd
 
-COPY --from=vendor /app/vendor ./vendor
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
+    zip \
+    unzip \
+    nodejs \
+    npm \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install PHP extensions
+RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
+
+# Install Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Copy application code
 COPY . .
 
-RUN curl -sL https://deb.nodesource.com/setup_18.x | bash - && \
-    apt-get install -y nodejs && \
-    npm install -g npm
+# Set proper permissions
+RUN chown -R www-data:www-data /var/www \
+    && chmod -R 755 /var/www/storage \
+    && chmod -R 755 /var/www/bootstrap/cache
 
-RUN npm install && npm run build || true
+# Install PHP dependencies
+RUN composer install --no-dev --optimize-autoloader
 
-CMD php artisan migrate --force && php-fpm
+# Install Node.js dependencies (for Laravel Mix/Vite)
+RUN npm install
+
+# Expose port
+EXPOSE 8000
+
+# Start PHP development server
+CMD php artisan serve --host=0.0.0.0 --port=8000

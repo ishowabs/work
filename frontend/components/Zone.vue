@@ -29,19 +29,21 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
+import { useRuntimeConfig } from '#app'
 import ChatWindow from './ChatWindow.vue'
 
 const users = ref([])
 const selectedUser = ref(null)
 const currentUser = ref(null)
+const config = useRuntimeConfig()
 
 onMounted(async () => {
   const token = localStorage.getItem('jwt')
-  const res = await fetch('http://localhost:8000/api/users', {
+  const res = await fetch(`${config.public.apiUrl}/api/users`, {
     headers: { Authorization: `Bearer ${token}` }
   })
   users.value = await res.json()
-  const meRes = await fetch('http://localhost:8000/api/me', {
+  const meRes = await fetch(`${config.public.apiUrl}/api/me`, {
     headers: { Authorization: `Bearer ${token}` }
   })
   currentUser.value = await meRes.json()

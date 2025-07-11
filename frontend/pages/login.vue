@@ -10,18 +10,18 @@
                 <path d="M21.362 9.354H12V.396a.396.396 0 0 0-.716-.233L2.203 12.424l-.401.562a1.04 1.04 0 0 0 0 1.028l.401.562 9.081 12.261a.396.396 0 0 0 .716-.233V17.646h9.362c.818 0 1.171-.645.51-1.182l-9.7-7.909a.396.396 0 0 1 0-.618l9.7-7.909c.661-.537.308-1.182-.51-1.182Z"/>
               </svg>
             </div>
-            <h1 class="supabase-title">Welcome back</h1>
-            <p class="supabase-subtitle">Sign in to your account</p>
+            <h1 class="supabase-title">{{ t('welcome') }}</h1>
+            <p class="supabase-subtitle">{{ t('login') }}</p>
           </div>
 
           <v-card-text class="supabase-card-content">
             <v-form @submit.prevent="onSubmit" ref="formRef" v-model="valid">
               <div class="supabase-field">
-                <label class="supabase-label">Email address</label>
+                <label class="supabase-label">{{ t('email') }}</label>
                 <v-text-field
                   v-model="email"
                   type="email"
-                  :rules="[v => !!v || 'Email is required']"
+                  :rules="[v => !!v || t('email_required')]"
                   required
                   variant="outlined"
                   class="supabase-input"
@@ -32,11 +32,11 @@
               </div>
               
               <div class="supabase-field">
-                <label class="supabase-label">Password</label>
+                <label class="supabase-label">{{ t('password') }}</label>
                 <v-text-field
                   v-model="password"
                   type="password"
-                  :rules="[v => !!v || 'Password is required']"
+                  :rules="[v => !!v || t('password_required')]"
                   required
                   variant="outlined"
                   class="supabase-input"
@@ -48,7 +48,7 @@
 
               <!-- Forgot Password Link -->
               <div class="supabase-forgot">
-                <a href="#" class="supabase-link">Forgot your password?</a>
+                <a href="#" class="supabase-link">{{ t('forgot_password') }}</a>
               </div>
 
               <v-btn 
@@ -58,8 +58,8 @@
                 class="supabase-btn"
                 :disabled="loading"
               >
-                <span v-if="loading">Signing in...</span>
-                <span v-else>Sign in</span>
+                <span v-if="loading">{{ t('logging_in') }}...</span>
+                <span v-else>{{ t('login') }}</span>
               </v-btn>
 
               <v-alert 
@@ -73,9 +73,9 @@
             </v-form>
 
             <div class="supabase-signup">
-              <span class="supabase-signup-text">Don't have an account? </span>
+              <span class="supabase-signup-text">{{ t('register') }}</span>
               <button @click="goToRegister" class="supabase-signup-link">
-                Sign up for free
+                {{ t('register') }}
               </button>
             </div>
           </v-card-text>
@@ -88,8 +88,12 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+import { useRuntimeConfig } from 'nuxt/app'
 
 const router = useRouter()
+const { t } = useI18n()
+const config = useRuntimeConfig()
 
 const email = ref('')
 const password = ref('')
@@ -104,15 +108,18 @@ const onSubmit = async () => {
 
   loading.value = true
   try {
-    const response = await fetch('http://localhost:8000/api/login', {
+    const response = await fetch(`${config.public.apiUrl}/api/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: email.value, password: password.value }),
     })
     const data = await response.json()
-    console.log('Login response:', data)
     if (response.ok && typeof data.token === 'string') {
-      localStorage.setItem('jwt', data.token)
+      // Store token in a reactive state instead of localStorage
+      // You might want to use a composable or store for this
+      if (process.client) {
+        localStorage.setItem('jwt', data.token)
+      }
       await fetchUser()
       router.push('/dashboard')
     } else {
@@ -130,22 +137,27 @@ function goToRegister() {
 }
 
 async function fetchUser() {
+  if (!process.client) return
+  
   const token = localStorage.getItem('jwt')
   if (!token) {
     console.error('No JWT token found in localStorage')
     return
   }
-  const res = await fetch('http://localhost:8000/api/me', {
-    headers: { Authorization: `Bearer ${token}` }
-  })
-  const text = await res.text()
-  console.log('Status:', res.status)
-  console.log('Response:', text)
-  if (!res.ok) {
-    throw new Error('Failed to fetch user: ' + text)
+  
+  try {
+    const res = await fetch(`${config.public.apiUrl}/api/me`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    const text = await res.text()
+    if (!res.ok) {
+      throw new Error('Failed to fetch user: ' + text)
+    }
+    const user = JSON.parse(text)
+    console.log('User fetched:', user)
+  } catch (error) {
+    console.error('Error fetching user:', error)
   }
-  const user = JSON.parse(text)
-  console.log('User fetched:', user)
 }
 </script>
 

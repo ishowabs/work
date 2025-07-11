@@ -4,7 +4,7 @@
       <v-list>
         <v-list-item>
           <v-list-item-content>
-            <v-list-item-title class="text-h6" style="color:#3ecf8e;">Dashboard</v-list-item-title>
+            <v-list-item-title class="text-h6" style="color:#3ecf8e;">{{ t('dashboard') }}</v-list-item-title>
           </v-list-item-content>
         </v-list-item>
         <v-divider></v-divider>
@@ -13,30 +13,28 @@
           @click="activeTab = 'clients'"
           class="rounded-lg my-1"
         >
-          <v-list-item-title>Users List</v-list-item-title>
+          <v-list-item-title>{{ t('users_list.title') }}</v-list-item-title>
         </v-list-item>
         <v-list-item
           :active="activeTab === 'zone'"
           @click="activeTab = 'zone'"
           class="rounded-lg my-1"
         >
-          <v-list-item-title>Zone</v-list-item-title>
+          <v-list-item-title>{{ t('sidebar.zone') }}</v-list-item-title>
         </v-list-item>
         <v-list-item
           :active="activeTab === 'chart'"
           @click="activeTab = 'chart'"
           class="rounded-lg my-1"
         >
-          <v-list-item-title>Chart</v-list-item-title>
+          <v-list-item-title>{{ t('sidebar.chart') }}</v-list-item-title>
         </v-list-item>
-       
-        
         <v-list-item
           :active="activeTab === 'settings'"
           @click="activeTab = 'settings'"
           class="rounded-lg my-1"
         >
-          <v-list-item-title>Settings</v-list-item-title>
+          <v-list-item-title>{{ t('settings.language') }}</v-list-item-title>
         </v-list-item>
       </v-list>
       <template #append>
@@ -52,9 +50,9 @@
       <v-container>
         <ChartComponent v-if="activeTab === 'chart'" />
         <ChatComponent v-if="activeTab === 'chat'" />
-        <div v-if="activeTab === 'settings'" class="text-white">Settings page coming soon.</div>
+        <Settings v-if="activeTab === 'settings'" />
         <UsersList v-if="activeTab === 'clients'" />
-        <Zone v-if="activeTab === 'zone'" /> <!-- Add this line for chat zone -->
+        <Zone v-if="activeTab === 'zone'" />
       </v-container>
     </v-main>
   </v-app>
@@ -63,11 +61,14 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import ChartComponent from '../components/ChartComponent.vue'
 import ChatComponent from '../components/ChatComponent.vue'
 import UsersList from '../components/UsersList.vue'
-import Zone from '../components/Zone.vue' // Import your Zone component
+import Zone from '../components/Zone.vue'
+import Settings from './settings.vue'
 
+const { t } = useI18n()
 const router = useRouter()
 const activeTab = ref('clients')
 
@@ -82,4 +83,10 @@ function logout() {
   localStorage.removeItem('jwt')
   router.replace('/login')
 }
-</script> 
+</script>
+
+<script lang="ts">
+export default {
+  components: { Settings }
+}
+</script>

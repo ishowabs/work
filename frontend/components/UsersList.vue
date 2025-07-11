@@ -1,14 +1,14 @@
 <template>
   <div class="userslist-container">
-    <h1 class="userslist-title">Users List</h1>
+    <h1 class="userslist-title">{{ t('users_list.title') }}</h1>
     <div class="userslist-table-wrapper">
       <table class="userslist-table">
         <thead>
           <tr>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Created At</th>
-            <th>Last Login At</th>
+            <th>{{ t('users_list.name') }}</th>
+            <th>{{ t('users_list.email') }}</th>
+            <th>{{ t('users_list.created_at') }}</th>
+            <th>{{ t('users_list.last_login_at') }}</th>
           </tr>
         </thead>
         <tbody>
@@ -16,7 +16,7 @@
             <td>{{ user.name }}</td>
             <td>{{ user.email }}</td>
             <td>{{ formatDate(user.created_at) }}</td>
-            <td>{{ user.last_login_at ? formatDate(user.last_login_at) : 'Never' }}</td>
+            <td>{{ user.last_login_at ? formatDate(user.last_login_at) : t('users_list.never') }}</td>
           </tr>
         </tbody>
       </table>
@@ -26,8 +26,10 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 
-const users = ref([])
+const { t } = useI18n()
+const users = ref<any[]>([])
 
 onMounted(async () => {
   const token = localStorage.getItem('jwt')

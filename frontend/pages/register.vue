@@ -10,17 +10,17 @@
                 <path d="M21.362 9.354H12V.396a.396.396 0 0 0-.716-.233L2.203 12.424l-.401.562a1.04 1.04 0 0 0 0 1.028l.401.562 9.081 12.261a.396.396 0 0 0 .716-.233V17.646h9.362c.818 0 1.171-.645.51-1.182l-9.7-7.909a.396.396 0 0 1 0-.618l9.7-7.909c.661-.537.308-1.182-.51-1.182Z"/>
               </svg>
             </div>
-            <h1 class="supabase-title">Get started</h1>
-            <p class="supabase-subtitle">Create a new account</p>
+            <h1 class="supabase-title">{{ t('welcome') }}</h1>
+            <p class="supabase-subtitle">{{ t('register') }}</p>
           </div>
 
           <v-card-text class="supabase-card-content">
             <v-form @submit.prevent="onSubmit" ref="formRef" v-model="valid">
               <div class="supabase-field">
-                <label class="supabase-label">Full Name</label>
+                <label class="supabase-label">{{ t('full_name') }}</label>
                 <v-text-field
                   v-model="name"
-                  :rules="[v => !!v || 'Full name is required']"
+                  :rules="[v => !!v || t('full_name_required')]"
                   required
                   variant="outlined"
                   class="supabase-input"
@@ -31,11 +31,11 @@
               </div>
 
               <div class="supabase-field">
-                <label class="supabase-label">Email address</label>
+                <label class="supabase-label">{{ t('email_address') }}</label>
                 <v-text-field
                   v-model="email"
                   type="email"
-                  :rules="[v => !!v || 'Email is required']"
+                  :rules="[v => !!v || t('email_required')]"
                   required
                   variant="outlined"
                   class="supabase-input"
@@ -46,11 +46,11 @@
               </div>
               
               <div class="supabase-field">
-                <label class="supabase-label">Password</label>
+                <label class="supabase-label">{{ t('password') }}</label>
                 <v-text-field
                   v-model="password"
                   type="password"
-                  :rules="[v => !!v || 'Password is required']"
+                  :rules="[v => !!v || t('password_required')]"
                   required
                   variant="outlined"
                   class="supabase-input"
@@ -61,13 +61,13 @@
               </div>
 
               <div class="supabase-field">
-                <label class="supabase-label">Confirm Password</label>
+                <label class="supabase-label">{{ t('confirm_password') }}</label>
                 <v-text-field
                   v-model="password_confirmation"
                   type="password"
                   :rules="[
-                    v => !!v || 'Confirmation is required',
-                    v => v === password || 'Passwords must match'
+                    v => !!v || t('confirmation_required'),
+                    v => v === password || t('passwords_must_match')
                   ]"
                   required
                   variant="outlined"
@@ -85,8 +85,8 @@
                 class="supabase-btn"
                 :disabled="loading"
               >
-                <span v-if="loading">Creating account...</span>
-                <span v-else>Sign up</span>
+                <span v-if="loading">{{ t('creating_account') }}...</span>
+                <span v-else>{{ t('register') }}</span>
               </v-btn>
 
               <v-alert 
@@ -100,9 +100,9 @@
             </v-form>
 
             <div class="supabase-signup">
-              <span class="supabase-signup-text">Already have an account? </span>
+              <span class="supabase-signup-text">{{ t('already_have_account') }}</span>
               <button @click="goToLogin" class="supabase-signup-link">
-                Sign in
+                {{ t('login') }}
               </button>
             </div>
           </v-card-text>
@@ -115,8 +115,12 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+import { useRuntimeConfig } from 'nuxt/app'
 
+const { t } = useI18n()
 const router = useRouter()
+const config = useRuntimeConfig()
 
 const name = ref('')
 const email = ref('')
@@ -133,7 +137,7 @@ const onSubmit = async () => {
 
   loading.value = true
   try {
-    const response = await fetch('http://localhost:8000/api/register', {
+    const response = await fetch(`${config.public.apiUrl}/api/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -144,14 +148,18 @@ const onSubmit = async () => {
       }),
     })
     const res = await response.json()
-    if (res.token) {
-      localStorage.setItem('jwt', res.token)
+    if (response.ok && res.token) {
+      // Store token in a reactive state instead of localStorage
+      // You might want to use a composable or store for this
+      if (process.client) {
+        localStorage.setItem('jwt', res.token)
+      }
       router.push('/dashboard')
     } else {
-      error.value = res.error || 'Registration failed'
+      error.value = res.error || res.message || t('registration_failed')
     }
   } catch (e) {
-    error.value = 'Registration failed'
+    error.value = t('registration_failed')
   } finally {
     loading.value = false
   }

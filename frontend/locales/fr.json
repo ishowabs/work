@@ -2,5 +2,22 @@
   "welcome": "Bienvenue",
   "login": "Connexion",
   "register": "Inscription",
-  "dashboard": "Tableau de bord"
+  "dashboard": "Tableau de bord",
+  "settings": {
+    "language": "Langue",
+    "select_language": "Choisir la langue"
+  },
+  "users_list": {
+    "title": "Liste des utilisateurs",
+    "name": "Nom",
+    "email": "Email",
+    "created_at": "Créé le",
+    "last_login_at": "Dernière connexion",
+    "never": "Jamais"
+  },
+  "sidebar": {
+    "users": "Utilisateurs",
+    "zone": "Zone",
+    "chart": "Statistiques"
+  }
 }

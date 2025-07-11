@@ -2,5 +2,22 @@
   "welcome": "Welcome",
   "login": "Login",
   "register": "Register",
-  "dashboard": "Dashboard"
+  "dashboard": "Dashboard",
+  "settings": {
+    "language": "Language",
+    "select_language": "Select language"
+  },
+  "users_list": {
+    "title": "Users List",
+    "name": "Name",
+    "email": "Email",
+    "created_at": "Created At",
+    "last_login_at": "Last Login At",
+    "never": "Never"
+  },
+  "sidebar": {
+    "users": "Users",
+    "zone": "Zone",
+    "chart": "Chart"
+  }
 }

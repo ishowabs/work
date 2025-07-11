@@ -1,56 +1,103 @@
 version: '3.8'
 
 services:
+  # MySQL Database
   db:
     image: mysql:8.0
+    container_name: laravel_nuxt_db
+    restart: unless-stopped
     environment:
-      MYSQL_DATABASE: laravel
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_USER: laravel
-      MYSQL_PASSWORD: laravel
-    ports:
-      - "3306:3306"
+      MYSQL_DATABASE: laravel_app
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_USER: laravel_user
+      MYSQL_PASSWORD: laravel_password
     volumes:
       - db_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    networks:
+      - app-network
 
+  # Redis (for caching and sessions)
+  redis:
+    image: redis:7-alpine
+    container_name: laravel_nuxt_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - app-network
+
+  # Laravel Backend
   backend:
     build:
       context: ./backend
-    depends_on:
-      - db
-    environment:
-      DB_CONNECTION: mysql
-      DB_HOST: db
-      DB_PORT: 3306
-      DB_DATABASE: laravel
-      DB_USERNAME: laravel
-      DB_PASSWORD: laravel
+      dockerfile: Dockerfile
+    container_name: laravel_backend
+    restart: unless-stopped
+    working_dir: /var/www
     volumes:
       - ./backend:/var/www
+      - ./backend/storage:/var/www/storage
     ports:
       - "8000:8000"
-    command: php artisan serve --host=0.0.0.0 --port=8000
+    depends_on:
+      - db
+      - redis
+    environment:
+      - DB_CONNECTION=mysql
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_DATABASE=laravel_app
+      - DB_USERNAME=laravel_user
+      - DB_PASSWORD=laravel_password
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    networks:
+      - app-network
 
-  websocket:
-    build:
-      context: ./backend
-      dockerfile: chat-server.Dockerfile
-    ports:
-      - "3001:3001"
-    volumes:
-      - ./backend:/app
-
+  # Nuxt Frontend
   frontend:
     build:
       context: ./frontend
+      dockerfile: Dockerfile
+    container_name: nuxt_frontend
+    restart: unless-stopped
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
     ports:
       - "3000:3000"
     depends_on:
       - backend
-      - websocket
     environment:
-      NUXT_PUBLIC_API_URL: http://backend:8000
-      NUXT_PUBLIC_SOCKET_URL: http://websocket:3001
+      - NUXT_HOST=0.0.0.0
+      - NUXT_PORT=3000
+    networks:
+      - app-network
+
+  # WebSocket Server (for your websocket-server.js)
+  websocket:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.websocket
+    container_name: websocket_server
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - ./backend:/var/www
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+      - redis
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
 
 volumes:
   db_data:
